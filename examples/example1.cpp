@@ -1,23 +1,7 @@
-# beans
-Open dependency injection library for modern C++
+#include <iostream>
 
-## Example
-BigClass.hpp
-```cpp
-#include <beans.hpp>
-#include "Element.hpp"
+#include "beans.hpp"
 
-class BigClass
-{
-public:
-    int getElementValue() { return element->value(); }
-private:
-    beans::Bean<IElement> element;
-};
-```
-
-Element.hpp
-```cpp
 class IElement
 {
 public:
@@ -38,15 +22,14 @@ public:
 private:
     int m_val;
 };
-```
 
-main.cpp
-```cpp
-#include <beans.hpp>
-#include <iostream>
-
-#include "BigClass.hpp"
-#include "Element.hpp"
+class BigClass
+{
+public:
+    int getElementValue() { return element->value(); }
+private:
+    beans::Bean<IElement> element;
+};
 
 int main(int argc, char** argv)
 try
@@ -77,4 +60,3 @@ catch (const std::exception& e)
     std::cerr << e.what() << std::endl;
     return -1;
 }
-```
