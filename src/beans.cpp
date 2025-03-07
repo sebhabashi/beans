@@ -48,33 +48,33 @@ const TypeInformation* TypeDatabaseManager::shallowFind(
 
     TypeInformation const * match = nullptr;
 
-    // If tag is specified, search an implementation with the tag
+    // If tag is specified, search an implementation with the tag (start from the last one)
     if (tag.empty())
     {
-        for (const auto& typeInfo : it->second)
+        for (auto it2 = it->second.rbegin(); it2 != it->second.rend(); ++it2)
         {
-            if (tag == typeInfo.tag)
+            if (tag == it2->tag)
             {
-                match = &typeInfo;
+                match = &*it2;
                 break;
             }
         }
     }
-    // Otherwise...
+    // Otherwise... 
     else
     {
-        // ...first try to find an implementation with empty tag
-        for (const auto& typeInfo : it->second)
+        // ...first try to find an implementation with empty tag (start from the last one)
+        for (auto it2 = it->second.rbegin(); it2 != it->second.rend(); ++it2)
         {
-            if (typeInfo.tag.empty())
+            if (it2->tag.empty())
             {
-                match = &typeInfo;
+                match = &*it2;
                 break;
             }
         }
-        // ...if not found, get any implementation
+        // ...if not found, get any implementation (start from the last one)
         if (nullptr == match && !it->second.empty())
-            match = &it->second.front();
+            match = &it->second.back();
     }
 
     return match;
