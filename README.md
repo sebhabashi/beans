@@ -4,40 +4,62 @@ Open dependency injection library for modern C++
 ## Example
 BigClass.hpp
 ```cpp
-#include <beans.hpp>
-#include "Element.hpp"
+#pragma once
 
+#include <beans.hpp>
+#include "FooBar.hpp"
+
+/// Some big class that needs to foo and bar
 class BigClass
 {
 public:
-    int getElementValue() { return element->value(); }
+    int getFooValue() { return m_foo->value(); }
+    void bar() { m_bar->doTheBar(); }
 private:
-    beans::Bean<IElement> element;
+    beans::Bean<IFoo> m_foo;
+    beans::Bean<IBar> m_bar;
 };
+
 ```
 
-Element.hpp
+FooBar.hpp
 ```cpp
-class IElement
+#pragma once
+
+#include <iostream>
+
+/// An interface that foo's
+class IFoo
 {
 public:
     virtual int value() = 0;
 };
 
-class Element : public IElement
+/// A class that foo's and implements IFoo
+class Foo : public IFoo
 {
 public:
-    virtual int value() override { return 123; }
-};
-
-class Element2 : public IElement
-{
-public:
-    Element2(int val) : m_val(val) {}
+    Foo(int val) : m_val(val) {}
     virtual int value() override { return m_val; }
 private:
     int m_val;
 };
+
+/// An interface that bar's
+class IBar
+{
+public:
+    virtual void doTheBar() = 0;
+};
+
+/// A class that bar's and implements IBar
+class Bar : public IBar
+{
+public:
+    Bar() = default;
+    virtual void doTheBar() override { std::cout << "BAR" << std::endl; }
+};
+
 ```
 
 main.cpp
@@ -46,29 +68,25 @@ main.cpp
 #include <iostream>
 
 #include "BigClass.hpp"
-#include "Element.hpp"
+#include "FooBar.hpp"
 
 int main(int argc, char** argv)
 try
 {
-    // First construction with implementation class
-    {
-        beans::LockedEnvironment locked;
-        beans::registerImplementation<IElement, Element>();
-        BigClass x;
+    // Register a unique instance for IFoo
+    // Mind that foo must not be destroyed while using classes are not destroyed
+    // From now on, IFoo beans will point to this instance
+    Foo foo(456);
+    beans::registerInstance<IFoo, Foo>(&foo);
 
-        std::cout << x.getElementValue() << std::endl;
-    }
+    // Register implementation
+    // From now on, IBar beans will be implemented with Bar
+    beans::registerImplementation<IBar, Bar>();
 
-    // Second construction with implementation instance
-    {
-        beans::LockedEnvironment locked;
-        Element2 element2(456);
-        beans::registerInstance<IElement, Element2>(&element2);
-        BigClass x;
-
-        std::cout << x.getElementValue() << std::endl;
-    }
+    // Create a BigClass instance. Its beans use the specified implementations
+    BigClass x;
+    std::cout << x.getFooValue() << std::endl; // "456"
+    x.bar(); // Prints "BAR" as defined in the Bar::doTheBar definition
 
     return 0;
 }

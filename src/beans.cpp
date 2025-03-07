@@ -24,6 +24,11 @@ const char *InterfaceNotDeclaredError::what() const noexcept
     return m_what.c_str();
 }
 
+const std::type_info &InterfaceNotDeclaredError::getTypeInfo() const
+{
+    return *m_typeInfo;
+}
+
 } // namespace error
 
 
