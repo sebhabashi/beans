@@ -1,4 +1,6 @@
 #include "calculator.hpp"
+#include "parser.hpp"
+#include "lexer.hpp"
 
 #include <beans.hpp>
 #include <catch2/catch.hpp>
@@ -116,6 +118,31 @@ TEST_CASE("calculator.Parser")
         CHECK(tree.children[0].value == 2.0);
         CHECK(tree.children[1].type == SemanticTree::T_NUMBER);
         CHECK(tree.children[1].value == 3.0);
+    }
+
+    SECTION("Parentheses")
+    {
+        // Initialization (parser uses beans so it must be constructed BEFORE environment unlock)
+        beans::LockedEnvironment env;
+        MockLexer lexer;
+        beans::registerInstance<ILexer>(&lexer);
+        Parser parser;
+        env.unlock();
+        
+        Token t1;
+        t1.type = Token::T_PAROPEN;
+        Token t2;
+        t2.type = Token::T_NUMBER;
+        t2.text = "1";
+        Token t3;
+        t3.type = Token::T_PARCLOSE;
+        lexer.tokens = { t1, t2, t3 };
+
+        parser.SetString("..."); // String is not lexed anyway
+        const auto& tree = parser.GetTree();
+        CHECK(tree.type == SemanticTree::T_NUMBER);
+        CHECK(tree.value == 1.0);
+        CHECK(tree.children.empty());
     }
 
     // TODO: complete unit tests here

@@ -17,7 +17,13 @@
     static_assert(!std::is_same<interface, implementation>::value, \
                   "Interface and implementation cannot be the same type."); \
     static_assert(std::is_assignable<interface*&, implementation*>::value, \
-                    "Implementation does not implement interface.");
+                    "Implementation does not implement interface."); \
+    static_assert(std::is_default_constructible<implementation>::value, \
+                  "Implementation must have a default constructor.");
+
+#define BEANS_INTERNAL_CONCAT(a, b) a ## b
+#define BEANS_INTERNAL_CONCATX(a, b) BEANS_INTERNAL_CONCAT(a, b)
+#define BEANS_INTERNAL_CONCAT_LINE(a) BEANS_INTERNAL_CONCATX(a, __LINE__)
 
 namespace beans
 {
@@ -361,23 +367,33 @@ void registerInstance(Interface* instance, const std::string& tag = "")
 
 } // namespace beans
 
+#ifdef BEANS_USE_DEFAULT_IMPLEMENTATIONS
 /// Declare an instance as the default implementation for an interface globally
+/// @details Note: using types with namespace specifiers is only available from C++17
 /// @param interface The interface
 /// @param implementation Implementation for the interface
-#define BEANS_DEFAULT_IMPLEMENTATION(interface, implementation) \
-        /* Forward-declare interface and implementation */ \
-        class interface; \
-        class implementation; \
-        \
+/// @param tag (Optional) Tag for the implementation
+#define BEANS_DEFAULT_IMPLEMENTATION(interface, implementation, ...) \
+        BEANS_INTERNAL_STATIC_TYPES_CHECKS(interface, implementation) \
         namespace beans \
         { \
-            namespace internal \
+        namespace internal \
+        { \
+        namespace register_##implementation##_For_##interface { \
+            /* Register the implementation at start of program, using a global dummy variable */ \
+            DoAtStart BEANS_INTERNAL_CONCAT_LINE(registration_l) ([] \
             { \
-                /* Register the implementation at start of program, using a global dummy variable */ \
-                DoAtStart register_##implementation##_For_##interface([] \
-                { \
-                    beans::registerImplementation<interface, implementation>(); \
-                }); \
-            } /* namespace internal */ \
+                beans::registerImplementation<interface, implementation>(__VA_ARGS__); \
+            }); \
+        } /* namespace register_##implementation##_For_##interface */ \
+        } /* namespace internal */ \
         } /* namespace beans */
+#else
+/// Declare an instance as the default implementation for an interface globally
+/// @details Note: using types with namespace specifiers is only available from C++17
+/// @param interface The interface
+/// @param implementation Implementation for the interface
+/// @param tag (Optional) Tag for the implementation
+#define BEANS_DEFAULT_IMPLEMENTATION(interface, implementation, ...)
+#endif
 
