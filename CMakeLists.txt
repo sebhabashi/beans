@@ -29,7 +29,6 @@ set_target_properties(Beans PROPERTIES
                       CMAKE_CXX_EXTENSIONS OFF
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}
-                      PUBLIC_HEADER "src/beans.hpp"
                       )
 
 # Installation
